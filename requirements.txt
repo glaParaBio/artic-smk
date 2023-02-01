@@ -1,0 +1,3 @@
+snakemake =7.20.0
+artic =1.2.3
+mafft =7.515

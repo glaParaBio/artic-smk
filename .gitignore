@@ -1,0 +1,8 @@
+/tmp/
+*.tmp
+*.swp
+*.swo
+test_out
+.snakemake
+/ont-guppy/
+__pycache__
