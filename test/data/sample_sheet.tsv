@@ -1,5 +1,6 @@
-﻿sample	barcode	scheme
-spam	barcode01	rabv_ea/V1
-eggs	barcode02	rabv_ea/V1
-foo	barcode04	abv_ea/V1
-foobar	barcode06	rabv_ea/V1
+﻿sample	barcode
+spam	barcode01
+eggs	barcode02
+foo	barcode04
+foobar	barcode06
+# Comment line

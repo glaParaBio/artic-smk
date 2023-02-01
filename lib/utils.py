@@ -6,7 +6,14 @@ import snakemake
 def read_sample_sheet(fn):
     """Read sample sheet in file fn into a DataFrame
     """
-    ss = pandas.read_csv(fn, sep='\t', comment='#')
+    done = False
+    for sep in ['\t', ',']:
+        ss = pandas.read_csv(fn, sep='\t', comment='#')
+        if 'sample' in ss.columns and 'barcode' in ss.columns:
+            done = True
+        if done:
+            break
+
     for colname in ['sample', 'barcode']:
         if colname not in ss.columns:
             raise Exception(f'Column {colname} not found in sample sheet {fn}')
@@ -23,10 +30,13 @@ def get_config(config):
         config['guppy_device'] = ''
     if 'guppy_extra_opts' not in config:
         config['guppy_extra_opts'] = ''
-    if 'consensus_name' not in config:
-        config['genome_name'] = 'genome'
     if 'guppy_path' not in config or config['guppy_path'] is None:
         config['guppy_path'] = ''
+
+    if config['guppy_path'] == '':
+        config['guppy_export_cmd'] = ''
+    else:
+        config['guppy_export_cmd'] = 'export PATH=%s:${PATH}' % config['guppy_path']
 
     if 'fast5_dir' in config and 'fastq_dir' in config:
         raise Exception('Provide one of fast5_dir or fastq_dir, not both')

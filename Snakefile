@@ -1,15 +1,8 @@
 from importlib.machinery import SourceFileLoader
-utils = SourceFileLoader('utils.py', os.path.join(workflow.basedir, 'lib', './utils.py')).load_module()
+utils = SourceFileLoader('utils.py', os.path.join(workflow.basedir, 'lib', 'utils.py')).load_module()
 
 ss = utils.read_sample_sheet(config['sample_sheet'])
 config = utils.get_config(config)
-
-if config['guppy_path'] == '':
-    guppy_export_cmd = ''
-else:
-    guppy_export_cmd = 'export PATH=%s:${PATH}' % config['guppy_path']
-
-print(guppy_export_cmd)
 
 wildcard_constraints:
     sample='|'.join([re.escape(x) for x in ss['sample']]),
@@ -31,7 +24,7 @@ rule guppy_basecaller:
         config=config['guppy_config'],
         device=utils.guppy_device_opt(config['guppy_device']), # This is the `-x` option
         extra_opts=config['guppy_extra_opts'],
-        guppy_export_cmd=lambda wc: guppy_export_cmd,
+        guppy_export_cmd=lambda wc: config['guppy_export_cmd'],
     shell:
         r"""
         {params.guppy_export_cmd}
@@ -50,7 +43,7 @@ rule guppy_barcoder:
         fastq_dir=directory(expand('fastq/{barcode}', barcode=ss['barcode'])),
     params:
         barcode_kit=config['guppy_barcode_kit'],
-        guppy_export_cmd=lambda wc: guppy_export_cmd,
+        guppy_export_cmd=lambda wc: config['guppy_export_cmd'],
     shell:
         r"""
         {params.guppy_export_cmd}
@@ -87,7 +80,7 @@ rule medaka:
         cons='medaka/{sample}.consensus.fasta',
     params:
         medaka_model=config['medaka_model'],
-        scheme=lambda wc: ss[ss['sample'] == wc.sample]['scheme'].drop_duplicates().iloc[0],
+        scheme=config['medaka_scheme']
     shell:
         r"""
         artic minion --medaka \
