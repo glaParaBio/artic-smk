@@ -21,18 +21,16 @@ rule guppy_basecaller:
     output:
         outdir=directory('guppy_basecaller'),
     params:
-        config=config['guppy_config'],
-        device=utils.guppy_device_opt(config['guppy_device']), # This is the `-x` option
-        extra_opts=config['guppy_extra_opts'],
         guppy_export_cmd=lambda wc: config['guppy_export_cmd'],
+        config=config['guppy_config'],
+        extra_opts=config['guppy_basecaller_opts'],
     shell:
         r"""
         {params.guppy_export_cmd}
-        guppy_basecaller --recursive {params.extra_opts} \
-            {params.device} \
+        guppy_basecaller --recursive \
             -c {params.config} \
             -i {input.fast5} \
-            -s {output.outdir}
+            -s {output.outdir} {params.extra_opts}
         """
 
 
@@ -80,12 +78,13 @@ rule medaka:
         cons='medaka/{sample}.consensus.fasta',
     params:
         medaka_model=config['medaka_model'],
-        scheme=config['medaka_scheme']
+        scheme=config['medaka_scheme'],
+        normalise=config['normalise'],
     shell:
         r"""
         artic minion --medaka \
             --medaka-model {params.medaka_model} \
-            --normalise 200 \
+            --normalise {params.normalise} \
             --threads 8 \
             --scheme-directory {input.medaka_scheme_directory} \
             --read-file {input.fastq} \

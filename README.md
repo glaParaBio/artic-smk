@@ -7,9 +7,10 @@
     * [Set up Guppy](#set-up-guppy)
     * [Set up conda environment](#set-up-conda-environment)
 * [Usage](#usage)
+    * [A basic example](#a-basic-example)
     * [Input sample sheet](#input-sample-sheet)
     * [Input reads](#input-reads)
-* [Devel](#devel)
+* [Testing & Development](#testing--development)
 
 <!-- vim-markdown-toc -->
 
@@ -72,10 +73,12 @@ mamba install --yes --file requirements.txt -n artic-smk
 
 # Usage
 
-The following command should work as-is using the test data.  It will process
-the given fast5 directory according to `sample_sheet.tsv`. Since option
-`--dry-run` is set it will only print what would be executed, remove it for the
-real processing.
+## A basic example
+
+The following command should work *as is* using the test data.  It will process
+the given `fast5` directory according to `sample_sheet.tsv`. It assumes guppy
+is on the search `PATH`. Since option `--dry-run` is set it will only print
+what would be executed, remove it for the real processing.
 
 ```
 ./artic-smk.py --sample-sheet test/data/sample_sheet.tsv \
@@ -85,56 +88,53 @@ real processing.
     --dry-run
 ```
 
-Run `./artic.smk.py -h` to see the list of available options. The following
-printout may be out of date:
+----
+
+Run `./artic.smk.py -h` to see the list of available options (the following
+printout may be out of date):
 
 ```
-Run artic pipeline
+positional arguments:
+  targets                           Target file(s) to create or rule(s) to execute [all]
 
 optional arguments:
   -h, --help                        show this help message and exit
-  --sample-sheet SAMPLE_SHEET, -s SAMPLE_SHEET
-                                    Tab-separated file of samples, barcodes, and
-                                    other sample-specific options. See online
-                                    doumentation for details [required]
-  --output OUTPUT, -o OUTPUT        Output directory [artic-out]
-  --medaka-scheme-directory MEDAKA_SCHEME_DIRECTORY, -sd MEDAKA_SCHEME_DIRECTORY
-                                    Path to scheme directory [primer-schemes]
-  --fast5-dir FAST5_DIR, -f5 FAST5_DIR
-                                    Directory of fast5 file. Typically the
-                                    Nanopore run directory
-  --fastq-dir FASTQ_DIR, -fq FASTQ_DIR
-                                    Input alternative to fastq5-dir: Directory
-                                    of demultiplexed fastq files. fastq-dir
-                                    contains subdirectories named after the
-                                    sample barcodes and containing the
-                                    respective fastq files
-  --genome-name GENOME_NAME, -g GENOME_NAME
-                                    Name for consensus genome [genome]
-  --guppy-config GUPPY_CONFIG       For fast5 input: Configuration for
-                                    guppy_basecaller
-                                    [dna_r9.4.1_450bps_fast.cfg]
-  --guppy-barcode-kit GUPPY_BARCODE_KIT
-                                    For fast5 input: Barcode kit passed to
-                                    guppy_barcoder [EXP-NBD104]
-  --guppy-basecaller-opts GUPPY_BASECALLER_OPTS
-                                    Additional options passed to
-                                    guppy_basecaller as a string with leading
-                                    space e.g. " --num_caller 10" []
-  --guppy-path GUPPY_PATH           Full path to guppy bin directory. Leave
-                                    empty if guppy is already on your search
-                                    PATH []
-  --min-length MIN_LENGTH, -L MIN_LENGTH
-                                    Ignore reads less than min-length [350]
-  --medaka-model MEDAKA_MODEL       Model to use for medaka [r941_min_fast_g303]
-  --jobs JOBS, -j JOBS              Number of jobs to run in parallel [1]
-  --dry-run, -n                     Run pipeline dry-run mode
-  --snakemake-opts SNAKEMAKE_OPTS, -smk SNAKEMAKE_OPTS
-                                    Additional options to snakemake as a string
-                                    with leading space e.g. " --rerun-incomplete
-                                    -k" []
   --version, -v                     show program's version number and exit
 
+Main input/output options:
+  --sample-sheet FILE, -s FILE      Tabular file of samples and barcodes. See online docs for
+                                    details [required]
+  --fast5-dir DIR, -f5 DIR          Directory of fast5 files
+  --fastq-dir DIR, -fq DIR          Directory of demultiplexed fastq files. fast5-dir OR fastq-dir
+                                    is required
+  --output DIR, -o DIR              Output directory [artic-out]
+
+Workflow managment options passed to snakemake:
+  --jobs N, -j N                    Number of jobs to run in parallel [1]
+  --dry-run, -n                     Only show what would be executed
+  --snakefile FILE                  Snakefile of the pipeline. The directory "lib" is expected to be
+                                    in the same directory as this file [Snakefile]
+  --snakemake-opts STR, -smk STR    Additional options to snakemake as a string with leading space
+                                    e.g. " --rerun-incomplete -k" [--rerun-incomplete]
+
+Options for guppy (for fast5 input only):
+  --guppy-config STR                Configuration for guppy_basecaller [dna_r9.4.1_450bps_fast.cfg]
+  --guppy-barcode-kit STR           Barcode kit [EXP-NBD104]
+  --guppy-basecaller-opts STR       Additional options passed to guppy_basecaller as a string with
+                                    leading space e.g. " --num_caller 10" []
+  --guppy-path DIR                  Full path to guppy bin directory. Leave empty if guppy is on
+                                    your search PATH []
+
+Options for artic minion/medaka:
+  --medaka-model STR                Model for medaka [r941_min_fast_g303]
+  --medaka-scheme-directory DIR, -sd DIR
+                                    Path to scheme directory [primer-schemes]
+  --medaka-scheme DIR               Scheme for medaka [rabv_ea/V1]
+  --normalise N                     Normalise down to moderate coverage to save runtime [200]
+
+Miscellanea:
+  --genome-name STR, -g STR         Name for consensus genome [genome]
+  --min-length N, -L N              Ignore reads less than min-length [350]
 ```
 
 ## Input sample sheet
@@ -151,11 +151,11 @@ Additional columns are ignored
 
 ## Input reads
 
-* **Options 1** A directory of **fast5** files that will be passed to
+* **Option 1** A directory of **fast5** files that will be passed to
   `guppy_basecaller` and `guppy_barcoder`. Typically this is the output of the
   Nanopore run. Use `--fast5-dir/-f5` option to start from here.
 
-* **Options 2** A directory of **fastq** files already demultiplexed and ready
+* **Option 2** A directory of **fastq** files already demultiplexed and ready
   for further processing. Use `--fastq/fq` option to start from here, guppy
   installation is not required. Fastq-dir contains subdirecties named after the
   sample barcodes. They don't need to be real barcode names as long as they
@@ -175,9 +175,9 @@ test/data/fastq/
 ```
 
 
-# Devel
+# Testing & Development
 
-To run test suite:
+To run the test suite:
 
 ```
 ./test/test.py
@@ -186,5 +186,5 @@ To run test suite:
 Compile this markdown to pdf:
 
 ```
-pandoc -V colorlinks=true -V geometry:margin=1in README.md -o README.pdf
+pandoc -V colorlinks=true -V geometry:margin=0.8in README.md -o README.pdf
 ```

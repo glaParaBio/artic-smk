@@ -26,12 +26,13 @@ def read_sample_sheet(fn):
 def get_config(config):
     """Parse the config dictionary to add defaults and throw friendly errors
     """
-    if 'guppy_device' not in config:
-        config['guppy_device'] = ''
-    if 'guppy_extra_opts' not in config:
-        config['guppy_extra_opts'] = ''
+    # If you pass an empty string as config, python/snakemake converts it to
+    # None so we need to put back the empty string:
     if 'guppy_path' not in config or config['guppy_path'] is None:
         config['guppy_path'] = ''
+
+    if 'guppy_basecaller_opts' not in config or config['guppy_basecaller_opts'] is None:
+        config['guppy_basecaller_opts'] = ''
 
     if config['guppy_path'] == '':
         config['guppy_export_cmd'] = ''
@@ -47,18 +48,6 @@ def get_config(config):
         symlink_force(os.path.abspath(config['fastq_dir']), os.path.abspath('fastq'))
         
     return config
-
-def guppy_device_opt(x):
-    """Parse command config option x and return a string suitable for guppy cli
-    """
-    if x.lower() == 'gpu' or x == '' or x is None:
-        return ''
-    elif x.lower() == 'auto':
-        return '-x auto'
-    elif x.startswith('cuda:'):
-        return '-x %s' % x
-    else:
-        raise Exception('Invalid option for guppy device: %s' % x)
 
 def symlink_force(target, link_name):
     # From https://stackoverflow.com/questions/8299386/modifying-a-symlink-in-python

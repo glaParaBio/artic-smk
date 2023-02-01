@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
             --output test_out \
             --guppy-basecaller-opts ' --num_callers 20'  \
             --guppy-path ont-guppy/ont-guppy-cpu_6.4.2_linux64/bin \
-            -smk ' -- guppy_basecaller'
+            guppy_basecaller
         """
         p = sp.Popen(cmd, shell=True, stdout= sp.PIPE, stderr= sp.PIPE)
         stdout, stderr = p.communicate()
