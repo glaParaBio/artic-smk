@@ -1,6 +1,9 @@
+import re
 import os
 import pandas
 import errno
+import subprocess
+import tempfile
 import snakemake
 
 def read_sample_sheet(fn):
@@ -22,6 +25,40 @@ def read_sample_sheet(fn):
             raise Exception(f'Duplicates found in column {colname}')
     
     return ss
+
+def select_guppy_device(guppy_path, guppy_basecaller_opts):
+    """Some euristics to select the best device option for guppy. Basically,
+    construct the `-x` option string
+    """
+    opts = ' ' + guppy_basecaller_opts + ' '
+    opts = re.sub(' --device ', '', ' -x ')
+    opts = re.sub(' +', ' ', opts)
+    for x in [' -x auto ', ' -xauto ', ' -x cuda:', ' -xcuda:']:
+        # If '-x' is already selected as an additional option, respect it and
+        # don't set -x again:
+        if x in opts:
+            return ''
+    
+    # Make dummy data to test GPU option
+    tmp = tempfile.TemporaryDirectory(dir='.')
+    bardir = os.path.join(tmp.name, 'barcode99')
+    os.makedirs(bardir)
+    with open(os.path.join(bardir, 'read.fastq'), 'w') as fq:
+        fq.write('@R1\n')
+        fq.write('AAAAAAAAAAAAAAAAAAAAAAAAA\n')
+        fq.write('+\n')
+        fq.write('AAAAAAAAAAAAAAAAAAAAAAAAA\n')
+
+    guppy = os.path.join(os.path.abspath(guppy_path), 'guppy_barcoder')
+    cmd = f'{guppy} -x auto -i {bardir} -s {tmp.name}'
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    tmp.cleanup()
+
+    if p.returncode == 0:
+        return '-x auto'
+    else:
+        return ''
 
 def get_config(config):
     """Parse the config dictionary to add defaults and throw friendly errors

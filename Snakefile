@@ -24,13 +24,14 @@ rule guppy_basecaller:
         guppy_export_cmd=lambda wc: config['guppy_export_cmd'],
         config=config['guppy_config'],
         extra_opts=config['guppy_basecaller_opts'],
+        device=lambda wc: utils.select_guppy_device(config['guppy_path'], config['guppy_basecaller_opts']),
     shell:
         r"""
         {params.guppy_export_cmd}
         guppy_basecaller --recursive \
             -c {params.config} \
             -i {input.fast5} \
-            -s {output.outdir} {params.extra_opts}
+            -s {output.outdir} {params.extra_opts} {params.device}
         """
 
 
@@ -42,6 +43,7 @@ rule guppy_barcoder:
     params:
         barcode_kit=config['guppy_barcode_kit'],
         guppy_export_cmd=lambda wc: config['guppy_export_cmd'],
+        device=lambda wc: utils.select_guppy_device(config['guppy_path'], config['guppy_basecaller_opts']),
     shell:
         r"""
         {params.guppy_export_cmd}
@@ -49,7 +51,7 @@ rule guppy_barcoder:
             --require_barcodes_both_ends \
             -i {input.fastq_dir} \
             -s fastq \
-            --barcode_kits {params.barcode_kit}
+            --barcode_kits {params.barcode_kit} {params.device}
         """
 
 
@@ -73,7 +75,7 @@ rule read_filtering:
 rule medaka:
     input:
         fastq=lambda wc: 'guppyplex/{sample}_%s.fastq' % ss[ss['sample'] == wc.sample].barcode.iloc[0],
-        medaka_scheme_directory=config['medaka_scheme_directory']
+        medaka_scheme_directory=config['medaka_scheme_directory'],
     output:
         cons='medaka/{sample}.consensus.fasta',
     params:

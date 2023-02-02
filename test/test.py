@@ -21,6 +21,31 @@ class Test(unittest.TestCase):
         if os.path.exists('test_out'):
             shutil.rmtree('test_out')
 
+    def testGuppyDeviceIsSelectedWithExtraOpts(self):
+        x = utils.select_guppy_device('', '-foo -x auto')
+        self.assertTrue(x == '')
+
+        x = utils.select_guppy_device('', '-foo -x    auto')
+        self.assertTrue(x == '')
+
+        x = utils.select_guppy_device('', '-x auto')
+        self.assertTrue(x == '')
+
+        x = utils.select_guppy_device('', ' -x cuda:0')
+        self.assertTrue(x == '')
+
+        x = utils.select_guppy_device('', '-x cuda:0')
+        self.assertTrue(x == '')
+
+        x = utils.select_guppy_device('', '-xcuda:0')
+        self.assertTrue(x == '')
+
+        x = utils.select_guppy_device('', '-foo -xauto ')
+        self.assertTrue(x == '')
+
+        x = utils.select_guppy_device('', '-foo --device auto')
+        self.assertTrue(x == '')
+
     def testLoadCsv(self):
         ss = utils.read_sample_sheet('test/data/sample_sheet.csv')
         self.assertTrue('sample' in ss.columns)
@@ -82,6 +107,22 @@ class Test(unittest.TestCase):
         stdout, stderr = p.communicate()
         self.assertEqual(0, p.returncode)
         self.assertTrue(os.path.isfile('test_out/mafft/my-genome.aln.fasta'))
+
+    def testNonDefaultPrimerScheme(self):
+        cmd = r"""
+        ./artic-smk.py \
+            --sample-sheet test/data/sample_sheet.tsv \
+            -fq test/data/fastq \
+            --genome-name my-genome \
+            --output test_out \
+            --normalise 50 \
+            --medaka-scheme-directory test/data/primer-schemes \
+            --medaka-scheme rabv_ea -- medaka/eggs.consensus.fasta
+        """
+        p = sp.Popen(cmd, shell=True, stdout= sp.PIPE, stderr= sp.PIPE)
+        stdout, stderr = p.communicate()
+        self.assertEqual(0, p.returncode)
+        self.assertTrue('test/data/primer-schemes/rabv_ea/V1/rabv_ea.reference.fasta' in stderr.decode())
 
 if __name__ == '__main__':
     unittest.main()

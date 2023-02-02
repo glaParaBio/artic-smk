@@ -37,28 +37,29 @@ parser = argparse.ArgumentParser(description='Run artic pipeline', formatter_cla
 parser.add_argument('targets', help='Target file(s) to create or rule(s) to execute [%(default)s]', nargs='*', default='all')
 
 io = parser.add_argument_group('Main input/output options')
-snakemake = parser.add_argument_group('Workflow managment options passed to snakemake')
 guppy = parser.add_argument_group('Options for guppy (for fast5 input only)')
 minion = parser.add_argument_group('Options for artic minion/medaka')
 misc = parser.add_argument_group('Miscellanea')
+snakemake = parser.add_argument_group('Workflow management options passed to snakemake')
 
 io.add_argument('--sample-sheet', '-s', help='Tabular file of samples and barcodes. See online docs for details [required]', required=True, metavar='FILE')
 io.add_argument('--fast5-dir', '-f5', help='Directory of fast5 files', metavar='DIR')
 io.add_argument('--fastq-dir', '-fq', help='Directory of demultiplexed fastq files. fast5-dir OR fastq-dir is required', metavar='DIR')
 io.add_argument('--output', '-o', help='Output directory [%(default)s]', default='artic-out', metavar='DIR')
 
+guppy.add_argument('--guppy-config', help='Configuration for guppy_basecaller [%(default)s]', default='dna_r9.4.1_450bps_fast.cfg', metavar='STR')
+guppy.add_argument('--guppy-barcode-kit', help='Barcode kit [%(default)s]', default='EXP-NBD104', metavar='STR')
+guppy.add_argument('--guppy-path', help='Full path to guppy bin directory. Leave empty if guppy is on your search PATH [%(default)s]', default='', metavar='DIR')
+guppy.add_argument('--guppy-basecaller-opts', help='Additional options passed to guppy_basecaller as a string with leading space e.g. " --num_callers 10" [%(default)s]', default='', metavar='STR')
+
 minion.add_argument('--medaka-model', help='Model for medaka [%(default)s]', default='r941_min_fast_g303', metavar='STR')
-minion.add_argument('--medaka-scheme-directory', '-sd', help='Path to scheme directory [%(default)s]', default='primer-schemes', metavar='DIR')
+default_scheme_directory = 'primer-schemes'
+minion.add_argument('--medaka-scheme-directory', '-sd', help=f'Path to scheme directory [{default_scheme_directory}]', default=None, metavar='DIR')
 minion.add_argument('--medaka-scheme', help='Scheme for medaka [%(default)s]', default='rabv_ea/V1', metavar='DIR')
 minion.add_argument('--normalise', help='Normalise down to moderate coverage to save runtime [%(default)s]', default=200, type=int, metavar='N')
 
 misc.add_argument('--genome-name', '-g', help='Name for consensus genome [%(default)s]', default='genome', metavar='STR')
 misc.add_argument('--min-length', '-L', help='Ignore reads less than min-length [%(default)s]', default=350, type=int, metavar='N')
-
-guppy.add_argument('--guppy-config', help='Configuration for guppy_basecaller [%(default)s]', default='dna_r9.4.1_450bps_fast.cfg', metavar='STR')
-guppy.add_argument('--guppy-barcode-kit', help='Barcode kit [%(default)s]', default='EXP-NBD104', metavar='STR')
-guppy.add_argument('--guppy-basecaller-opts', help='Additional options passed to guppy_basecaller as a string with leading space e.g. " --num_caller 10" [%(default)s]', default='', metavar='STR')
-guppy.add_argument('--guppy-path', help='Full path to guppy bin directory. Leave empty if guppy is on your search PATH [%(default)s]', default='', metavar='DIR')
 
 snakemake.add_argument('--jobs', '-j', help='Number of jobs to run in parallel [%(default)s]', default=1, type=int, metavar='N')
 snakemake.add_argument('--dry-run', '-n', help='Only show what would be executed', action='store_true')
@@ -71,7 +72,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sample_sheet = os.path.abspath(args.sample_sheet)
-    medaka_scheme_directory = os.path.abspath(args.medaka_scheme_directory)
     
     if args.fast5_dir is not None and args.fastq_dir is not None:
         sys.stderr.write('Please provide fast5 or fastq input, not both\n')
@@ -98,6 +98,11 @@ if __name__ == '__main__':
     if not os.path.isfile(utils):
         sys.stderr.write('The directory containing the snakefile ("%s") does not contain the lib directory\n' % libdir)
         sys.exit(1)
+    
+    medaka_scheme_directory = args.medaka_scheme_directory
+    if medaka_scheme_directory is None:
+        medaka_scheme_directory = os.path.join(libdir, default_scheme_directory)
+    medaka_scheme_directory = os.path.abspath(medaka_scheme_directory)
 
     if args.targets == []:
         targets = ''

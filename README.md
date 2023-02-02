@@ -8,7 +8,8 @@
     * [Set up conda environment](#set-up-conda-environment)
 * [Usage](#usage)
     * [A basic example](#a-basic-example)
-    * [Input sample sheet](#input-sample-sheet)
+* [Input](#input)
+    * [Sample sheet](#sample-sheet)
     * [Input reads](#input-reads)
 * [Testing & Development](#testing--development)
 
@@ -34,7 +35,7 @@ Or get it from
 wget https://mirror.oxfordnanoportal.com/software/analysis/ont-guppy-cpu_6.4.2_linux64.tar.gz
 
 # GPU
-wget https://mirror.oxfordnanoportal.com/software/analysis/ont-guppy-gpu_6.4.2_linux64.tar.gz
+wget https://mirror.oxfordnanoportal.com/software/analysis/ont-guppy_6.4.2_linux64.tar.gz
 ```
 
 Extract files: 
@@ -52,8 +53,8 @@ export PATH=/full/path/to/ont-guppy_6.4.2_linux64/bin:$PATH
 To permanently have guppy available on your PATH, add the command above to the
 file `~/.bashrc`.
 
-If you don't or you can't edit your PATH, use option `--guppy-path` in
-`artic-smk.py` to point to the guppy bin directory. E.g. `--guppy-path
+If you don't or you can't edit your PATH, use option `--guppy-path` to point to
+the guppy bin directory. E.g. `--guppy-path
 /path/to/ont-guppy_6.4.2_linux64/bin`
 
 ## Set up conda environment
@@ -109,21 +110,13 @@ Main input/output options:
                                     is required
   --output DIR, -o DIR              Output directory [artic-out]
 
-Workflow managment options passed to snakemake:
-  --jobs N, -j N                    Number of jobs to run in parallel [1]
-  --dry-run, -n                     Only show what would be executed
-  --snakefile FILE                  Snakefile of the pipeline. The directory "lib" is expected to be
-                                    in the same directory as this file [Snakefile]
-  --snakemake-opts STR, -smk STR    Additional options to snakemake as a string with leading space
-                                    e.g. " --rerun-incomplete -k" [--rerun-incomplete]
-
 Options for guppy (for fast5 input only):
   --guppy-config STR                Configuration for guppy_basecaller [dna_r9.4.1_450bps_fast.cfg]
   --guppy-barcode-kit STR           Barcode kit [EXP-NBD104]
-  --guppy-basecaller-opts STR       Additional options passed to guppy_basecaller as a string with
-                                    leading space e.g. " --num_caller 10" []
   --guppy-path DIR                  Full path to guppy bin directory. Leave empty if guppy is on
                                     your search PATH []
+  --guppy-basecaller-opts STR       Additional options passed to guppy_basecaller as a string with
+                                    leading space e.g. " --num_callers 10" []
 
 Options for artic minion/medaka:
   --medaka-model STR                Model for medaka [r941_min_fast_g303]
@@ -135,9 +128,19 @@ Options for artic minion/medaka:
 Miscellanea:
   --genome-name STR, -g STR         Name for consensus genome [genome]
   --min-length N, -L N              Ignore reads less than min-length [350]
+
+Workflow management options passed to snakemake:
+  --jobs N, -j N                    Number of jobs to run in parallel [1]
+  --dry-run, -n                     Only show what would be executed
+  --snakefile FILE                  Snakefile of the pipeline. The directory "lib" is expected to be
+                                    in the same directory as this file [Snakefile]
+  --snakemake-opts STR, -smk STR    Additional options to snakemake as a string with leading space
+                                    e.g. " --rerun-incomplete -k" [--rerun-incomplete]
 ```
 
-## Input sample sheet
+# Input
+
+## Sample sheet
 
 This is a tabular file tab or comma separated with first non-skipped line as
 header. Lines starting with '#' are skipped. Columns are:
@@ -157,7 +160,7 @@ Additional columns are ignored
 
 * **Option 2** A directory of **fastq** files already demultiplexed and ready
   for further processing. Use `--fastq/fq` option to start from here, guppy
-  installation is not required. Fastq-dir contains subdirecties named after the
+  installation is not required. Fastq-dir contains subdirectories named after the
   sample barcodes. They don't need to be real barcode names as long as they
   match the sample sheet column `barcode`. Each subdirectory can contain
   multiple fastq files, possibly gzip'd. This is the test data example:
